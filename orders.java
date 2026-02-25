@@ -37,7 +37,7 @@ class orderservices {
 
 public class orders {
     public static void main(String[] args) {
-        orderservices order = new orderservices("ORD12345", "Rice, Chips, Detergents", "$50", "2024-07-01, 123 Main St", 3);
+        orderservices order = new orderservices("ORD12345", "Rice, Chips, Detergents", "$50", "Previous orders: ORD11111, ORD22222", "2024-07-01, 123 Main St", 3);
         System.out.println("Order Services:");
         System.out.println("Order ID: " + order.OrderID);
         System.out.println("Cart Items: " + order.CartItems);
