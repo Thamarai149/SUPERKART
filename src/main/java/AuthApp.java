@@ -9,8 +9,8 @@ import database.MongoDBConnection;
 
 public class AuthApp {
     private static String currentToken = null;
-    private static AuthService authService = new AuthService();
-    private static AuthMiddleware authMiddleware = new AuthMiddleware();
+    private static final AuthService authService = new AuthService();
+    private static final AuthMiddleware authMiddleware = new AuthMiddleware();
     
     public static void main(String[] args) {
         try (Scanner scanner = new Scanner(System.in)) {
