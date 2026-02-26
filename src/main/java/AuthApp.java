@@ -1,7 +1,12 @@
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
 import org.bson.Document;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 
 import auth.AuthMiddleware;
 import auth.AuthResponse;
@@ -382,17 +387,43 @@ public class AuthApp {
         System.out.println("\n========================================");
         System.out.println("        MY ORDERS");
         System.out.println("========================================");
-        System.out.println("\nOrder #ORD001");
-        System.out.println("Items: Rice, Cooking Oil, Chips");
-        System.out.println("Total: $35");
-        System.out.println("Status: Delivered");
-        System.out.println("Date: 2026-02-20");
         
-        System.out.println("\nOrder #ORD002");
-        System.out.println("Items: Laptop, Headphones");
-        System.out.println("Total: $1050");
-        System.out.println("Status: In Transit");
-        System.out.println("Date: 2026-02-24");
+        Document user = authMiddleware.getCurrentUser(currentToken);
+        if (user == null) {
+            System.out.println("\n[ERROR] User not found!");
+            return;
+        }
+        
+        String userEmail = user.getString("email");
+        MongoCollection<Document> ordersCollection = MongoDBConnection.getDatabase().getCollection("orders");
+        
+        try (MongoCursor<Document> cursor = ordersCollection.find(new Document("userEmail", userEmail)).iterator()) {
+            if (!cursor.hasNext()) {
+                System.out.println("\nNo orders found!");
+            } else {
+                while (cursor.hasNext()) {
+                    Document order = cursor.next();
+                    System.out.println("\nOrder ID: " + order.getString("orderId"));
+                    System.out.println("Total: $" + String.format("%.2f", order.getDouble("totalAmount")));
+                    System.out.println("Payment: " + order.getString("paymentMethod"));
+                    System.out.println("Address: " + order.getString("deliveryAddress"));
+                    System.out.println("Phone: " + order.getString("phone"));
+                    System.out.println("Date: " + new Date(order.getLong("orderDate")));
+                    System.out.println("Status: " + order.getString("status"));
+                    
+                    @SuppressWarnings("unchecked")
+                    List<Document> items = (List<Document>) order.get("items");
+                    System.out.println("Items:");
+                    for (Document item : items) {
+                        System.out.println("  - " + item.getString("productName") + 
+                                         " x" + item.getInteger("quantity") + 
+                                         " = $" + String.format("%.2f", item.getDouble("totalPrice")));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("\n[ERROR] Failed to fetch orders: " + e.getMessage());
+        }
         
         System.out.println("\n========================================");
     }
@@ -410,11 +441,64 @@ public class AuthApp {
         int choice = scanner.nextInt();
         scanner.nextLine();
         
-        if (choice == 1) {
-            System.out.println("\n--- ALL USERS ---");
-            System.out.println("1. john@example.com - John Doe (User)");
-            System.out.println("2. jane@example.com - Jane Smith (User)");
-            System.out.println("3. admin@superkart.com - Admin User (Admin)");
+        switch (choice) {
+            case 1:
+                System.out.println("\n--- ALL USERS ---");
+                MongoCollection<Document> usersCollection = MongoDBConnection.getDatabase().getCollection("users");
+                
+                try (MongoCursor<Document> cursor = usersCollection.find().iterator()) {
+                    int count = 1;
+                    if (!cursor.hasNext()) {
+                        System.out.println("No users found!");
+                    } else {
+                        while (cursor.hasNext()) {
+                            Document user = cursor.next();
+                            System.out.println(count + ". " + user.getString("email") + 
+                                             " - " + user.getString("name") + 
+                                             " (" + user.getString("role").toUpperCase() + ")");
+                            count++;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("[ERROR] Failed to fetch users: " + e.getMessage());
+                }
+                break;
+                
+            case 2:
+                System.out.print("Enter email to search: ");
+                String email = scanner.nextLine();
+                
+                MongoCollection<Document> usersCollection2 = MongoDBConnection.getDatabase().getCollection("users");
+                Document user = usersCollection2.find(new Document("email", email)).first();
+                
+                if (user != null) {
+                    System.out.println("\n--- USER FOUND ---");
+                    System.out.println("Name: " + user.getString("name"));
+                    System.out.println("Email: " + user.getString("email"));
+                    System.out.println("Role: " + user.getString("role").toUpperCase());
+                    System.out.println("Created: " + new Date(user.getLong("createdAt")));
+                } else {
+                    System.out.println("\n[ERROR] User not found!");
+                }
+                break;
+                
+            case 3:
+                System.out.print("Enter email to delete: ");
+                String emailToDelete = scanner.nextLine();
+                System.out.print("Are you sure? (yes/no): ");
+                String confirm = scanner.nextLine();
+                
+                if (confirm.equalsIgnoreCase("yes")) {
+                    MongoCollection<Document> usersCollection3 = MongoDBConnection.getDatabase().getCollection("users");
+                    long deleted = usersCollection3.deleteOne(new Document("email", emailToDelete)).getDeletedCount();
+                    
+                    if (deleted > 0) {
+                        System.out.println("\n[SUCCESS] User deleted successfully!");
+                    } else {
+                        System.out.println("\n[ERROR] User not found!");
+                    }
+                }
+                break;
         }
     }
     
@@ -432,18 +516,35 @@ public class AuthApp {
         int choice = scanner.nextInt();
         scanner.nextLine();
         
-        if (choice == 1) {
-            System.out.print("\nEnter Product Name: ");
-            String name = scanner.nextLine();
-            System.out.print("Enter Price: $");
-            double price = scanner.nextDouble();
-            scanner.nextLine();
-            System.out.print("Enter Category: ");
-            String category = scanner.nextLine();
-            System.out.println("\n[SUCCESS] Product '" + name + "' added successfully!");
-            System.out.println("Price: $" + price + " | Category: " + category);
-        } else if (choice == 4) {
-            browseProducts(scanner);
+        MongoCollection<Document> productsCollection = MongoDBConnection.getDatabase().getCollection("products");
+        
+        switch (choice) {
+            case 1:
+                System.out.print("\nEnter Product Name: ");
+                String name = scanner.nextLine();
+                System.out.print("Enter Price: $");
+                double price = scanner.nextDouble();
+                scanner.nextLine();
+                System.out.print("Enter Category: ");
+                String category = scanner.nextLine();
+                
+                Document product = new Document("name", name)
+                        .append("price", price)
+                        .append("category", category)
+                        .append("createdAt", System.currentTimeMillis());
+                
+                try {
+                    productsCollection.insertOne(product);
+                    System.out.println("\n[SUCCESS] Product '" + name + "' added successfully!");
+                    System.out.println("Price: $" + price + " | Category: " + category);
+                } catch (Exception e) {
+                    System.out.println("\n[ERROR] Failed to add product: " + e.getMessage());
+                }
+                break;
+                
+            case 4:
+                browseProducts(scanner);
+                break;
         }
     }
     
@@ -451,17 +552,36 @@ public class AuthApp {
         System.out.println("\n========================================");
         System.out.println("        ALL ORDERS (ADMIN)");
         System.out.println("========================================");
-        System.out.println("\nOrder #ORD001 - john@example.com");
-        System.out.println("Items: Rice, Cooking Oil, Chips");
-        System.out.println("Total: $35 | Status: Delivered");
         
-        System.out.println("\nOrder #ORD002 - jane@example.com");
-        System.out.println("Items: Laptop, Headphones");
-        System.out.println("Total: $1050 | Status: In Transit");
+        MongoCollection<Document> ordersCollection = MongoDBConnection.getDatabase().getCollection("orders");
         
-        System.out.println("\nOrder #ORD003 - john@example.com");
-        System.out.println("Items: Smartphone, Smart Watch");
-        System.out.println("Total: $750 | Status: Processing");
+        try (MongoCursor<Document> cursor = ordersCollection.find().iterator()) {
+            if (!cursor.hasNext()) {
+                System.out.println("\nNo orders found!");
+            } else {
+                while (cursor.hasNext()) {
+                    Document order = cursor.next();
+                    System.out.println("\nOrder ID: " + order.getString("orderId") + 
+                                     " - " + order.getString("userEmail"));
+                    System.out.println("Total: $" + String.format("%.2f", order.getDouble("totalAmount")) + 
+                                     " | Status: " + order.getString("status"));
+                    System.out.println("Payment: " + order.getString("paymentMethod"));
+                    System.out.println("Date: " + new Date(order.getLong("orderDate")));
+                    
+                    @SuppressWarnings("unchecked")
+                    List<Document> items = (List<Document>) order.get("items");
+                    System.out.print("Items: ");
+                    for (int i = 0; i < items.size(); i++) {
+                        Document item = items.get(i);
+                        System.out.print(item.getString("productName"));
+                        if (i < items.size() - 1) System.out.print(", ");
+                    }
+                    System.out.println();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("\n[ERROR] Failed to fetch orders: " + e.getMessage());
+        }
         
         System.out.println("\n========================================");
     }
@@ -470,11 +590,29 @@ public class AuthApp {
         System.out.println("\n========================================");
         System.out.println("        SYSTEM SETTINGS");
         System.out.println("========================================");
-        System.out.println("1. Database Status: Connected");
-        System.out.println("2. Total Users: 15");
-        System.out.println("3. Total Products: 32");
-        System.out.println("4. Total Orders: 48");
-        System.out.println("5. Server Status: Running");
+        
+        try {
+            MongoCollection<Document> usersCollection = MongoDBConnection.getDatabase().getCollection("users");
+            MongoCollection<Document> ordersCollection = MongoDBConnection.getDatabase().getCollection("orders");
+            MongoCollection<Document> productsCollection = MongoDBConnection.getDatabase().getCollection("products");
+            
+            long totalUsers = usersCollection.countDocuments();
+            long totalOrders = ordersCollection.countDocuments();
+            long totalProducts = productsCollection.countDocuments();
+            
+            System.out.println("1. Database Status: Connected");
+            System.out.println("2. Total Users: " + totalUsers);
+            System.out.println("3. Total Products: " + totalProducts + " (32 in catalog)");
+            System.out.println("4. Total Orders: " + totalOrders);
+            System.out.println("5. Server Status: Running");
+        } catch (Exception e) {
+            System.out.println("1. Database Status: Error - " + e.getMessage());
+            System.out.println("2. Total Users: N/A");
+            System.out.println("3. Total Products: N/A");
+            System.out.println("4. Total Orders: N/A");
+            System.out.println("5. Server Status: Running");
+        }
+        
         System.out.println("========================================");
     }
     
@@ -539,6 +677,12 @@ public class AuthApp {
             return;
         }
         
+        Document user = authMiddleware.getCurrentUser(currentToken);
+        if (user == null) {
+            System.out.println("\n[ERROR] User not found!");
+            return;
+        }
+        
         System.out.println("\n========================================");
         System.out.println("        CHECKOUT");
         System.out.println("========================================");
@@ -567,19 +711,51 @@ public class AuthApp {
         scanner.nextLine();
         
         String orderId = "ORD" + System.currentTimeMillis();
+        String paymentMethodStr = paymentMethod == 1 ? "Cash on Delivery" : paymentMethod == 2 ? "UPI" : "Card";
         
-        System.out.println("\n========================================");
-        System.out.println("[SUCCESS] Order Placed Successfully!");
-        System.out.println("========================================");
-        System.out.println("Order ID: " + orderId);
-        System.out.println("Total Amount: $" + String.format("%.2f", userCart.getTotalAmount()));
-        System.out.println("Payment Method: " + (paymentMethod == 1 ? "Cash on Delivery" : paymentMethod == 2 ? "UPI" : "Card"));
-        System.out.println("Delivery Address: " + address);
-        System.out.println("Estimated Delivery: 3-5 business days");
-        System.out.println("========================================");
-        
-        // Clear cart after successful order
-        userCart.clearCart();
+        // Save order to MongoDB
+        try {
+            MongoCollection<Document> ordersCollection = MongoDBConnection.getDatabase().getCollection("orders");
+            
+            List<Document> orderItems = new ArrayList<>();
+            for (CartItem item : items) {
+                Document orderItem = new Document("productName", item.getProductName())
+                        .append("price", item.getPrice())
+                        .append("quantity", item.getQuantity())
+                        .append("totalPrice", item.getTotalPrice());
+                orderItems.add(orderItem);
+            }
+            
+            Document order = new Document("orderId", orderId)
+                    .append("userEmail", user.getString("email"))
+                    .append("userName", user.getString("name"))
+                    .append("items", orderItems)
+                    .append("totalAmount", userCart.getTotalAmount())
+                    .append("deliveryAddress", address)
+                    .append("phone", phone)
+                    .append("paymentMethod", paymentMethodStr)
+                    .append("status", "Processing")
+                    .append("orderDate", System.currentTimeMillis());
+            
+            ordersCollection.insertOne(order);
+            
+            System.out.println("\n========================================");
+            System.out.println("[SUCCESS] Order Placed Successfully!");
+            System.out.println("========================================");
+            System.out.println("Order ID: " + orderId);
+            System.out.println("Total Amount: $" + String.format("%.2f", userCart.getTotalAmount()));
+            System.out.println("Payment Method: " + paymentMethodStr);
+            System.out.println("Delivery Address: " + address);
+            System.out.println("Estimated Delivery: 3-5 business days");
+            System.out.println("========================================");
+            
+            // Clear cart after successful order
+            userCart.clearCart();
+            
+        } catch (Exception e) {
+            System.out.println("\n[ERROR] Failed to place order: " + e.getMessage());
+            System.out.println("Please try again or contact support.");
+        }
     }
     
     private static void quickAddProducts(Scanner scanner) {
