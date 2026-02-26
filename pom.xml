@@ -28,6 +28,14 @@
                     </includes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>SuperkartApp</mainClass>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
