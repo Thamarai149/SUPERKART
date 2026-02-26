@@ -5,6 +5,8 @@ import org.bson.Document;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
+import database.MongoDBConnection;
+
 class LoginService {
     private final MongoDatabase database;
     private final MongoCollection<Document> collection;
