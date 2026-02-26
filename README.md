@@ -1,4 +1,14 @@
-# Superkart MongoDB Project
+# Superkart E-Commerce System
+
+A complete e-commerce management system with MongoDB integration for user management, inventory, orders, and payments.
+
+## Features
+
+- User Registration & Login
+- Inventory Management
+- Order Processing
+- Payment Processing (UPI & Card)
+- MongoDB Database Integration
 
 ## Setup
 
@@ -10,32 +20,45 @@ mvn clean install
 
 ## Compile
 
-To compile all Java files together (required for MongoDBConnection to be found):
-
 ```bash
-javac -cp ".;lib/*" *.java
-```
-
-Or use Maven:
-```bash
-mvn compile
+mvn clean compile
 ```
 
 ## Run
 
-After compiling, run any of the main classes:
+### Main Application (Interactive Menu)
+```powershell
+mvn exec:java "-Dexec.mainClass=SuperkartApp"
+```
 
-```bash
-java -cp ".;lib/*" profiles
-java -cp ".;lib/*" orders
-java -cp ".;lib/*" inventory
-java -cp ".;lib/*" payments
+### Individual Services
+```powershell
+mvn exec:java "-Dexec.mainClass=Main"
+mvn exec:java "-Dexec.mainClass=login"
+mvn exec:java "-Dexec.mainClass=profiles"
+mvn exec:java "-Dexec.mainClass=orders"
+mvn exec:java "-Dexec.mainClass=inventory"
+mvn exec:java "-Dexec.mainClass=payments"
 ```
 
 ## Database
 
-All data will be saved to the `superkart` database in MongoDB with collections:
-- profiles
-- orders
-- inventory
-- payments
+Database Name: `superkart`
+
+Collections:
+- `profiles` - User accounts with authentication
+- `inventory` - Product catalog
+- `orders` - Customer orders with delivery info
+- `payments` - Payment transactions and receipts
+
+## Application Flow
+
+1. Register/Login users
+2. Browse and manage inventory
+3. Place orders with delivery details
+4. Process payments via UPI or Card
+5. All data automatically saved to MongoDB
+
+## Note
+
+Always use Maven commands to compile and run. Do not use `javac` directly as it won't include MongoDB dependencies.
