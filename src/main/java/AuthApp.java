@@ -292,6 +292,9 @@ public class AuthApp {
         System.out.println("\n========================================");
         System.out.println("        PRODUCT CATALOG");
         System.out.println("========================================");
+        System.out.println("NOTE: Add ONE product at a time here.");
+        System.out.println("For multiple products, use 'Quick Add' from menu.");
+        System.out.println("========================================");
         System.out.println("\n--- GROCERIES ---");
         System.out.println("1. Rice (Basmati) - $15/kg");
         System.out.println("2. Wheat Flour - $8/kg");
@@ -365,8 +368,13 @@ public class AuthApp {
             }
         } catch (java.util.InputMismatchException e) {
             scanner.nextLine(); // Clear invalid input
-            System.out.println("\n[ERROR] Invalid input! Please enter a single number.");
-            System.out.println("Tip: For multiple products, use 'Quick Add' from the main menu!");
+            System.out.println("\n[ERROR] Invalid input! Please enter a single product number.");
+            System.out.println("\n========================================");
+            System.out.println("TIP: To add multiple products at once:");
+            System.out.println("1. Go back to User Dashboard");
+            System.out.println("2. Select 'Quick Add (Multiple Products)'");
+            System.out.println("3. Enter products like: 1,2 then 4,3 then done");
+            System.out.println("========================================");
         }
     }
     
