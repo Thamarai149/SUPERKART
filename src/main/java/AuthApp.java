@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.Scanner;
 
 import org.bson.Document;
@@ -11,6 +12,43 @@ public class AuthApp {
     private static String currentToken = null;
     private static final AuthService authService = new AuthService();
     private static final AuthMiddleware authMiddleware = new AuthMiddleware();
+    private static final Cart userCart = new Cart();
+    
+    // Product catalog
+    private static final String[][] PRODUCTS = {
+        {"Rice (Basmati)", "15"},
+        {"Wheat Flour", "8"},
+        {"Pulses (Dal)", "12"},
+        {"Cooking Oil", "10"},
+        {"Sugar", "6"},
+        {"Salt", "2"},
+        {"Potato Chips", "3"},
+        {"Cookies", "5"},
+        {"Chocolates", "8"},
+        {"Coffee", "15"},
+        {"Tea", "10"},
+        {"Soft Drinks", "2"},
+        {"Detergent Powder", "12"},
+        {"Dish Soap", "4"},
+        {"Floor Cleaner", "6"},
+        {"Disinfectant Spray", "8"},
+        {"Refrigerator", "800"},
+        {"Washing Machine", "600"},
+        {"Microwave Oven", "200"},
+        {"Air Conditioner", "1200"},
+        {"Water Purifier", "300"},
+        {"Smartphone", "500"},
+        {"Laptop", "1000"},
+        {"Bluetooth Speaker", "80"},
+        {"Headphones", "50"},
+        {"Smart Watch", "250"},
+        {"Tablet", "400"},
+        {"Shampoo", "8"},
+        {"Soap", "3"},
+        {"Toothpaste", "4"},
+        {"Face Cream", "15"},
+        {"Body Lotion", "12"}
+    };
     
     public static void main(String[] args) {
         try (Scanner scanner = new Scanner(System.in)) {
@@ -81,8 +119,10 @@ public class AuthApp {
         System.out.println("========================================");
         System.out.println("1. View Profile");
         System.out.println("2. Browse Products");
-        System.out.println("3. My Orders");
-        System.out.println("4. Logout");
+        System.out.println("3. View Cart");
+        System.out.println("4. Quick Add (Multiple Products)");
+        System.out.println("5. My Orders");
+        System.out.println("6. Logout");
         System.out.println("========================================");
         System.out.print("Enter your choice: ");
         
@@ -97,9 +137,15 @@ public class AuthApp {
                 browseProducts(scanner);
                 break;
             case 3:
-                viewMyOrders();
+                viewCart(scanner);
                 break;
             case 4:
+                quickAddProducts(scanner);
+                break;
+            case 5:
+                viewMyOrders();
+                break;
+            case 6:
                 logout();
                 break;
             default:
@@ -289,7 +335,6 @@ public class AuthApp {
         System.out.println("30. Toothpaste - $4/tube");
         System.out.println("31. Face Cream - $15/jar");
         System.out.println("32. Body Lotion - $12/bottle");
-        
         System.out.println("\n========================================");
         System.out.print("Enter product number to add to cart (0 to go back): ");
         int productChoice = scanner.nextInt();
@@ -299,7 +344,20 @@ public class AuthApp {
             System.out.print("Enter quantity: ");
             int quantity = scanner.nextInt();
             scanner.nextLine();
-            System.out.println("\n[SUCCESS] Added " + quantity + " item(s) to cart! (Feature coming soon)");
+            
+            String productName = PRODUCTS[productChoice - 1][0];
+            double price = Double.parseDouble(PRODUCTS[productChoice - 1][1]);
+            
+            userCart.addItem(productName, price, quantity);
+            System.out.println("\n[SUCCESS] Added " + quantity + " x " + productName + " to cart!");
+            System.out.println("Cart Total: $" + String.format("%.2f", userCart.getTotalAmount()));
+            System.out.println("Total Items in Cart: " + userCart.getTotalItems());
+            
+            System.out.print("\nAdd more products? (y/n): ");
+            String addMore = scanner.nextLine();
+            if (addMore.equalsIgnoreCase("y")) {
+                browseProducts(scanner);
+            }
         }
     }
     
@@ -402,4 +460,162 @@ public class AuthApp {
         System.out.println("5. Server Status: Running");
         System.out.println("========================================");
     }
+    
+    private static void viewCart(Scanner scanner) {
+        System.out.println("\n========================================");
+        System.out.println("        YOUR SHOPPING CART");
+        System.out.println("========================================");
+        
+        if (userCart.isEmpty()) {
+            System.out.println("\nYour cart is empty!");
+            System.out.println("========================================");
+            return;
+        }
+        
+        List<CartItem> items = userCart.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            CartItem item = items.get(i);
+            System.out.println((i + 1) + ". " + item.getProductName());
+            System.out.println("   Price: $" + item.getPrice() + " x " + item.getQuantity() + " = $" + String.format("%.2f", item.getTotalPrice()));
+        }
+        
+        System.out.println("\n----------------------------------------");
+        System.out.println("Total Items: " + userCart.getTotalItems());
+        System.out.println("Total Amount: $" + String.format("%.2f", userCart.getTotalAmount()));
+        System.out.println("========================================");
+        
+        System.out.println("\n1. Proceed to Checkout");
+        System.out.println("2. Remove Item");
+        System.out.println("3. Clear Cart");
+        System.out.println("4. Continue Shopping");
+        System.out.print("Enter choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        
+        switch (choice) {
+            case 1:
+                checkout(scanner);
+                break;
+            case 2:
+                System.out.print("Enter item number to remove: ");
+                int itemNum = scanner.nextInt();
+                scanner.nextLine();
+                if (itemNum > 0 && itemNum <= items.size()) {
+                    userCart.removeItem(itemNum - 1);
+                    System.out.println("\n[SUCCESS] Item removed from cart!");
+                }
+                break;
+            case 3:
+                userCart.clearCart();
+                System.out.println("\n[SUCCESS] Cart cleared!");
+                break;
+            case 4:
+                browseProducts(scanner);
+                break;
+        }
+    }
+    
+    private static void checkout(Scanner scanner) {
+        if (userCart.isEmpty()) {
+            System.out.println("\n[ERROR] Your cart is empty!");
+            return;
+        }
+        
+        System.out.println("\n========================================");
+        System.out.println("        CHECKOUT");
+        System.out.println("========================================");
+        
+        System.out.print("Enter Delivery Address: ");
+        String address = scanner.nextLine();
+        System.out.print("Enter Phone Number: ");
+        String phone = scanner.nextLine();
+        
+        System.out.println("\n--- ORDER SUMMARY ---");
+        List<CartItem> items = userCart.getItems();
+        for (CartItem item : items) {
+            System.out.println(item.getProductName() + " x" + item.getQuantity() + " = $" + String.format("%.2f", item.getTotalPrice()));
+        }
+        System.out.println("\nTotal Amount: $" + String.format("%.2f", userCart.getTotalAmount()));
+        System.out.println("Delivery Address: " + address);
+        System.out.println("Phone: " + phone);
+        
+        System.out.println("\n--- PAYMENT METHOD ---");
+        System.out.println("1. Cash on Delivery");
+        System.out.println("2. UPI");
+        System.out.println("3. Card");
+        System.out.print("Select payment method: ");
+        
+        int paymentMethod = scanner.nextInt();
+        scanner.nextLine();
+        
+        String orderId = "ORD" + System.currentTimeMillis();
+        
+        System.out.println("\n========================================");
+        System.out.println("[SUCCESS] Order Placed Successfully!");
+        System.out.println("========================================");
+        System.out.println("Order ID: " + orderId);
+        System.out.println("Total Amount: $" + String.format("%.2f", userCart.getTotalAmount()));
+        System.out.println("Payment Method: " + (paymentMethod == 1 ? "Cash on Delivery" : paymentMethod == 2 ? "UPI" : "Card"));
+        System.out.println("Delivery Address: " + address);
+        System.out.println("Estimated Delivery: 3-5 business days");
+        System.out.println("========================================");
+        
+        // Clear cart after successful order
+        userCart.clearCart();
+    }
 }
+
+    
+    private static void quickAddProducts(Scanner scanner) {
+        System.out.println("\n========================================");
+        System.out.println("        QUICK ADD PRODUCTS");
+        System.out.println("========================================");
+        System.out.println("Add multiple products quickly!");
+        System.out.println("Format: product_number,quantity");
+        System.out.println("Example: 1,2 (adds 2 units of product 1)");
+        System.out.println("Enter 'done' when finished");
+        System.out.println("========================================\n");
+        
+        boolean adding = true;
+        while (adding) {
+            System.out.print("Enter product (number,quantity) or 'done': ");
+            String input = scanner.nextLine().trim();
+            
+            if (input.equalsIgnoreCase("done")) {
+                adding = false;
+                if (!userCart.isEmpty()) {
+                    System.out.println("\n[SUCCESS] Added " + userCart.getTotalItems() + " items to cart!");
+                    System.out.println("Cart Total: $" + String.format("%.2f", userCart.getTotalAmount()));
+                    
+                    System.out.print("\nProceed to checkout? (y/n): ");
+                    String checkout = scanner.nextLine();
+                    if (checkout.equalsIgnoreCase("y")) {
+                        viewCart(scanner);
+                    }
+                }
+            } else {
+                try {
+                    String[] parts = input.split(",");
+                    if (parts.length == 2) {
+                        int productNum = Integer.parseInt(parts[0].trim());
+                        int quantity = Integer.parseInt(parts[1].trim());
+                        
+                        if (productNum > 0 && productNum <= 32 && quantity > 0) {
+                            String productName = PRODUCTS[productNum - 1][0];
+                            double price = Double.parseDouble(PRODUCTS[productNum - 1][1]);
+                            
+                            userCart.addItem(productName, price, quantity);
+                            System.out.println("[SUCCESS] Added " + quantity + " x " + productName);
+                        } else {
+                            System.out.println("[ERROR] Invalid product number or quantity!");
+                        }
+                    } else {
+                        System.out.println("[ERROR] Invalid format! Use: number,quantity");
+                    }
+                } catch (Exception e) {
+                    System.out.println("[ERROR] Invalid input! Use format: number,quantity");
+                }
+            }
+        }
+    }
