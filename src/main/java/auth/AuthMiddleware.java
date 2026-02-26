@@ -43,7 +43,7 @@ public class AuthMiddleware {
     // Block unauthorized access
     public boolean requireAuth(String token) {
         if (!isAuthenticated(token)) {
-            System.out.println("✗ Unauthorized: Please login first");
+            System.out.println("[ERROR] Unauthorized: Please login first");
             return false;
         }
         return true;
@@ -52,11 +52,11 @@ public class AuthMiddleware {
     // Block non-admin access
     public boolean requireAdmin(String token) {
         if (!isAuthenticated(token)) {
-            System.out.println("✗ Unauthorized: Please login first");
+            System.out.println("[ERROR] Unauthorized: Please login first");
             return false;
         }
         if (!isAdmin(token)) {
-            System.out.println("✗ Forbidden: Admin access required");
+            System.out.println("[ERROR] Forbidden: Admin access required");
             return false;
         }
         return true;
@@ -65,11 +65,11 @@ public class AuthMiddleware {
     // Block non-user access
     public boolean requireUser(String token) {
         if (!isAuthenticated(token)) {
-            System.out.println("✗ Unauthorized: Please login first");
+            System.out.println("[ERROR] Unauthorized: Please login first");
             return false;
         }
         if (!isUser(token)) {
-            System.out.println("✗ Forbidden: User access required");
+            System.out.println("[ERROR] Forbidden: User access required");
             return false;
         }
         return true;

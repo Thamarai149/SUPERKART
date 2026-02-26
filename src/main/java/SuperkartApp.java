@@ -21,11 +21,11 @@ class LoginService {
         Document user = collection.find(query).first();
         
         if (user != null) {
-            System.out.println("\n✓ Login Successful!");
+            System.out.println("\n[SUCCESS] Login Successful!");
             System.out.println("Welcome, " + user.getString("Name"));
             return true;
         } else {
-            System.out.println("\n✗ Login Failed!");
+            System.out.println("\n[ERROR] Login Failed!");
             System.out.println("Invalid email or password.");
             return false;
         }
@@ -74,7 +74,7 @@ public class SuperkartApp {
                         System.out.println("\nThank you for using Superkart!");
                         break;
                     default:
-                        System.out.println("\n✗ Invalid choice! Please try again.");
+                        System.out.println("\n[ERROR] Invalid choice! Please try again.");
                 }
             }
             
@@ -103,7 +103,7 @@ public class SuperkartApp {
             profile user = new profile(name, email, password, phone);
             user.saveToDatabase();
             
-            System.out.println("\n✓ Registration Successful!");
+            System.out.println("\n[SUCCESS] Registration Successful!");
             System.out.println("Name: " + user.Name);
             System.out.println("Email: " + user.Email);
         } else if (option == 2) {
@@ -140,7 +140,7 @@ public class SuperkartApp {
             inventoryservices inv = new inventoryservices(grocery, snacks, cleaning, appliances, electronics);
             inv.saveToDatabase();
             
-            System.out.println("\n✓ Inventory Added Successfully!");
+            System.out.println("\n[SUCCESS] Inventory Added Successfully!");
         } else if (option == 2) {
             System.out.println("\n--- AVAILABLE INVENTORY ---");
             System.out.println("Grocery: Rice, Wheat, Pulses, Oil");
@@ -173,7 +173,7 @@ public class SuperkartApp {
         orderservices order = new orderservices(orderId, cartItems, "$" + amount, orderHistory, deliveryInfo, count);
         order.saveToDatabase();
         
-        System.out.println("\n✓ Order Placed Successfully!");
+        System.out.println("\n[SUCCESS] Order Placed Successfully!");
         System.out.println("Order ID: " + order.OrderID);
         System.out.println("Total Amount: " + order.orderAmount);
         System.out.println("Delivery: " + order.DeliveryDatePlace);
@@ -216,7 +216,7 @@ public class SuperkartApp {
         payment pay = new payment(upi, card, amount, paymentBill);
         pay.saveToDatabase();
         
-        System.out.println("\n✓ Payment Successful!");
+        System.out.println("\n[SUCCESS] Payment Successful!");
         System.out.println("\n" + paymentBill);
     }
     
