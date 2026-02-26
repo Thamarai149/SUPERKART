@@ -45,7 +45,7 @@ public class AuthApp {
         System.out.println("1. User Registration");
         System.out.println("2. User Login");
         System.out.println("3. Admin Login");
-        System.out.println("4. Create Admin (Setup Only)");
+        System.out.println("4. Create Admin");
         System.out.println("5. Exit");
         System.out.println("========================================");
         System.out.print("Enter your choice: ");
