@@ -299,7 +299,7 @@ public class AuthApp {
             System.out.print("Enter quantity: ");
             int quantity = scanner.nextInt();
             scanner.nextLine();
-            System.out.println("\n[SUCCESS] Added to cart! (Feature coming soon)");
+            System.out.println("\n[SUCCESS] Added " + quantity + " item(s) to cart! (Feature coming soon)");
         }
     }
     
@@ -365,7 +365,8 @@ public class AuthApp {
             scanner.nextLine();
             System.out.print("Enter Category: ");
             String category = scanner.nextLine();
-            System.out.println("\n[SUCCESS] Product added successfully!");
+            System.out.println("\n[SUCCESS] Product '" + name + "' added successfully!");
+            System.out.println("Price: $" + price + " | Category: " + category);
         } else if (choice == 4) {
             browseProducts(scanner);
         }
