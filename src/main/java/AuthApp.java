@@ -337,27 +337,36 @@ public class AuthApp {
         System.out.println("32. Body Lotion - $12/bottle");
         System.out.println("\n========================================");
         System.out.print("Enter product number to add to cart (0 to go back): ");
-        int productChoice = scanner.nextInt();
-        scanner.nextLine();
         
-        if (productChoice > 0 && productChoice <= 32) {
-            System.out.print("Enter quantity: ");
-            int quantity = scanner.nextInt();
+        try {
+            int productChoice = scanner.nextInt();
             scanner.nextLine();
             
-            String productName = PRODUCTS[productChoice - 1][0];
-            double price = Double.parseDouble(PRODUCTS[productChoice - 1][1]);
-            
-            userCart.addItem(productName, price, quantity);
-            System.out.println("\n[SUCCESS] Added " + quantity + " x " + productName + " to cart!");
-            System.out.println("Cart Total: $" + String.format("%.2f", userCart.getTotalAmount()));
-            System.out.println("Total Items in Cart: " + userCart.getTotalItems());
-            
-            System.out.print("\nAdd more products? (y/n): ");
-            String addMore = scanner.nextLine();
-            if (addMore.equalsIgnoreCase("y")) {
-                browseProducts(scanner);
+            if (productChoice > 0 && productChoice <= 32) {
+                System.out.print("Enter quantity: ");
+                int quantity = scanner.nextInt();
+                scanner.nextLine();
+                
+                String productName = PRODUCTS[productChoice - 1][0];
+                double price = Double.parseDouble(PRODUCTS[productChoice - 1][1]);
+                
+                userCart.addItem(productName, price, quantity);
+                System.out.println("\n[SUCCESS] Added " + quantity + " x " + productName + " to cart!");
+                System.out.println("Cart Total: $" + String.format("%.2f", userCart.getTotalAmount()));
+                System.out.println("Total Items in Cart: " + userCart.getTotalItems());
+                
+                System.out.print("\nAdd more products? (y/n): ");
+                String addMore = scanner.nextLine();
+                if (addMore.equalsIgnoreCase("y")) {
+                    browseProducts(scanner);
+                }
+            } else if (productChoice != 0) {
+                System.out.println("\n[ERROR] Invalid product number!");
             }
+        } catch (java.util.InputMismatchException e) {
+            scanner.nextLine(); // Clear invalid input
+            System.out.println("\n[ERROR] Invalid input! Please enter a single number.");
+            System.out.println("Tip: For multiple products, use 'Quick Add' from the main menu!");
         }
     }
     
@@ -564,8 +573,6 @@ public class AuthApp {
         // Clear cart after successful order
         userCart.clearCart();
     }
-}
-
     
     private static void quickAddProducts(Scanner scanner) {
         System.out.println("\n========================================");
@@ -613,9 +620,10 @@ public class AuthApp {
                     } else {
                         System.out.println("[ERROR] Invalid format! Use: number,quantity");
                     }
-                } catch (Exception e) {
+                } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     System.out.println("[ERROR] Invalid input! Use format: number,quantity");
                 }
             }
         }
     }
+}
